@@ -2,37 +2,198 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Owner Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel | Urban Cuts</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; background: #2c3e50; color: white; padding: 20px; }
-        .item { background: white; color: black; padding: 10px; margin: 10px 0; display: flex; justify-content: space-between; align-items: center; border-radius: 5px;}
-        button { background: green; color: white; border: none; padding: 5px 10px; cursor: pointer; }
+        :root {
+            --bg: #0f0f0f;
+            --card: #1f1f1f;
+            --text: #ffffff;
+            --green: #2ecc71;
+            --red: #e74c3c;
+            --gold: #d4af37;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 15px;
+        }
+
+        h2 { margin: 0; font-weight: 600; color: var(--gold); }
+        .badge { background: #333; padding: 5px 10px; border-radius: 20px; font-size: 12px; }
+
+        /* Stats Section */
+        .stats-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: linear-gradient(145deg, #252525, #1a1a1a);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid #333;
+        }
+
+        .stat-number { font-size: 24px; font-weight: bold; color: white; }
+        .stat-label { font-size: 12px; color: #888; }
+
+        /* Queue List */
+        .queue-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .queue-item {
+            background: var(--card);
+            margin-bottom: 15px;
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+            border-left: 4px solid var(--gold);
+        }
+
+        .queue-item:hover { transform: translateY(-2px); }
+
+        .customer-info h3 { margin: 0; font-size: 18px; }
+        .customer-info p { margin: 5px 0 0; color: #aaa; font-size: 14px; }
+        .service-tag { 
+            background: #333; color: var(--gold); 
+            padding: 4px 8px; border-radius: 4px; font-size: 11px; 
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        /* Action Buttons */
+        .btn-done {
+            background: var(--green);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(46, 204, 113, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-done:active { transform: scale(0.9); }
+
+        .empty-state {
+            text-align: center;
+            color: #555;
+            margin-top: 50px;
+        }
+
     </style>
 </head>
 <body>
-    <h2>Admin Dashboard</h2>
-    <div id="list"></div>
+
+    <header>
+        <h2>Admin Panel</h2>
+        <span class="badge">LIVE</span>
+    </header>
+
+    <div class="stats-container">
+        <div class="stat-card">
+            <div class="stat-number" id="total-pending">0</div>
+            <div class="stat-label">Pending Customers</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="est-time">0 min</div>
+            <div class="stat-label">Wait Time</div>
+        </div>
+    </div>
+
+    <h3 style="color: #888; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Current Queue</h3>
+    
+    <div id="queue-container" class="queue-list">
+        <div class="empty-state">Loading data...</div>
+    </div>
 
     <script>
-        // --- BAD ME YAHAN APNA BACKEND LINK DALNA ---
-        const API_URL = "YAHAN_BACKEND_URL_AAYEGA"; 
+        // --- ⚠️ IMPORTANT: Paste Render URL Here ---
+        const API_URL = " https://salon-startup.onrender.com"; 
 
-        async function load() {
-            const res = await fetch(`${API_URL}/admin-data`);
-            const data = await res.json();
-            document.getElementById('list').innerHTML = data.map(i => `
-                <div class="item">
-                    <span>${i.name} (${i.service})</span>
-                    <button onclick="done(${i.id})">Done</button>
-                </div>
-            `).join('');
+        async function loadQueue() {
+            try {
+                const res = await fetch(`${API_URL}/admin-data`);
+                const data = await res.json();
+                
+                const container = document.getElementById('queue-container');
+                const countDisplay = document.getElementById('total-pending');
+                const timeDisplay = document.getElementById('est-time');
+
+                // Update Stats
+                countDisplay.innerText = data.length;
+                timeDisplay.innerText = (data.length * 20) + " min"; // Approx logic
+
+                // Clear List
+                container.innerHTML = '';
+
+                if (data.length === 0) {
+                    container.innerHTML = '<div class="empty-state">🍵 No customers right now. Relax!</div>';
+                    return;
+                }
+
+                // Render List
+                data.forEach(customer => {
+                    const item = document.createElement('div');
+                    item.className = 'queue-item';
+                    item.innerHTML = `
+                        <div class="customer-info">
+                            <h3>${customer.name}</h3>
+                            <span class="service-tag">${customer.service}</span>
+                        </div>
+                        <button class="btn-done" onclick="markDone(${customer.id})">✔</button>
+                    `;
+                    container.appendChild(item);
+                });
+
+            } catch (error) {
+                console.log("Connection Error");
+            }
         }
-        async function done(id) {
-            await fetch(`${API_URL}/complete/${id}`, { method: 'POST' });
-            load();
+
+        async function markDone(id) {
+            // Optimistic UI Update (Turant gayab kar do user ko wait mat karao)
+            loadQueue(); 
+
+            try {
+                await fetch(`${API_URL}/complete/${id}`, { method: 'POST' });
+                // Asli refresh
+                loadQueue();
+            } catch (error) {
+                alert("Network Error");
+            }
         }
-        setInterval(load, 5000);
-        load();
+
+        // Auto Refresh every 5 seconds
+        setInterval(loadQueue, 5000);
+        loadQueue();
+
     </script>
 </body>
 </html>
