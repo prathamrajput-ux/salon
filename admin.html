@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Owner Dashboard</title>
+    <style>
+        body { font-family: sans-serif; background: #2c3e50; color: white; padding: 20px; }
+        .item { background: white; color: black; padding: 10px; margin: 10px 0; display: flex; justify-content: space-between; align-items: center; border-radius: 5px;}
+        button { background: green; color: white; border: none; padding: 5px 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>Admin Dashboard</h2>
+    <div id="list"></div>
+
+    <script>
+        // --- BAD ME YAHAN APNA BACKEND LINK DALNA ---
+        const API_URL = "YAHAN_BACKEND_URL_AAYEGA"; 
+
+        async function load() {
+            const res = await fetch(`${API_URL}/admin-data`);
+            const data = await res.json();
+            document.getElementById('list').innerHTML = data.map(i => `
+                <div class="item">
+                    <span>${i.name} (${i.service})</span>
+                    <button onclick="done(${i.id})">Done</button>
+                </div>
+            `).join('');
+        }
+        async function done(id) {
+            await fetch(`${API_URL}/complete/${id}`, { method: 'POST' });
+            load();
+        }
+        setInterval(load, 5000);
+        load();
+    </script>
+</body>
+</html>

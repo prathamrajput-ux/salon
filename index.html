@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salon Booking</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f0f2f5; text-align: center; }
+        .container { background: white; max-width: 400px; margin: auto; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        input, select, button { width: 90%; padding: 10px; margin: 10px 0; }
+        button { background: black; color: white; border: none; cursor: pointer; }
+        h1 { color: #d35400; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>💈 Salon Booking</h2>
+        <div style="background: #ffeaa7; padding: 10px; margin-bottom: 20px; border-radius: 5px;">
+            <h3>Waiting Time: <span id="wait-time">...</span></h3>
+            <p id="people-count">Loading...</p>
+        </div>
+        <input type="text" id="name" placeholder="Name">
+        <input type="text" id="phone" placeholder="Phone">
+        <select id="service"><option>Haircut</option><option>Shave</option></select>
+        <button onclick="bookNow()">Book Now</button>
+    </div>
+
+    <script>
+        // --- BAD ME YAHAN APNA BACKEND LINK DALNA ---
+        const API_URL = "YAHAN_BACKEND_URL_AAYEGA"; 
+
+        async function loadStatus() {
+            try {
+                const res = await fetch(`${API_URL}/status`);
+                const data = await res.json();
+                document.getElementById('wait-time').innerText = data.wait_time + " min";
+                document.getElementById('people-count').innerText = data.people_ahead + " people ahead";
+            } catch (e) { console.log("Backend connecting..."); }
+        }
+
+        async function bookNow() {
+            const data = {
+                name: document.getElementById('name').value,
+                phone: document.getElementById('phone').value,
+                service: document.getElementById('service').value
+            };
+            await fetch(`${API_URL}/book`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            alert("Booked!");
+            loadStatus();
+        }
+        setInterval(loadStatus, 5000); // Har 5 sec me refresh
+        loadStatus();
+    </script>
+</body>
+</html>
